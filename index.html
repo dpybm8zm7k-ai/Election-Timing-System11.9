@@ -345,7 +345,9 @@ button:disabled {
 <body>
 
 <header id="mainHeader">
-  <h1>生徒会選挙用 演説タイマーシステム (ver26.11.9)</h1>
+  <h1>生徒会選挙用</h1>
+  <h1>リアルタイム演説タイマーシステム</h1>
+  <h1>(ver26.11.9.11.35)</h1>
   <p>2026 made by DOJYO</p>
 </header>
 
@@ -963,7 +965,7 @@ window.addMode = async function() {
   );
 
   if (!name) {
-    alert("モード名を入力してください。");
+    alert("モード名を設定してください！");
     return;
   }
 
@@ -972,7 +974,7 @@ window.addMode = async function() {
     seconds < 1 ||
     seconds > 86400
   ) {
-    alert("秒数は1～86400秒で設定してください。");
+    alert("秒数を入力してください！");
     return;
   }
 
