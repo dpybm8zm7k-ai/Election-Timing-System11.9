@@ -1,0 +1,1266 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>REMOTE TIMER SYSTEM</title>
+
+<style>
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: Arial, "Noto Sans JP", sans-serif;
+  background: #080808;
+  color: white;
+}
+
+button, input {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+.hidden {
+  display: none !important;
+}
+
+/* 共通 */
+
+header {
+  padding: 22px;
+  text-align: center;
+  border-bottom: 1px solid #292929;
+}
+
+header h1 {
+  font-size: 20px;
+  letter-spacing: 3px;
+  margin: 0;
+}
+
+header p {
+  color: #777;
+  font-size: 11px;
+  letter-spacing: 2px;
+}
+
+.container {
+  max-width: 850px;
+  margin: auto;
+  padding: 24px;
+}
+
+.section {
+  background: #151515;
+  border: 1px solid #303030;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 18px;
+}
+
+.section h2 {
+  font-size: 15px;
+  margin: 0 0 16px;
+  color: #f0a044;
+}
+
+input {
+  width: 100%;
+  background: #090909;
+  border: 1px solid #444;
+  border-radius: 7px;
+  color: white;
+  padding: 13px;
+  outline: none;
+}
+
+input:focus {
+  border-color: #f39a36;
+}
+
+button {
+  border: 0;
+  border-radius: 7px;
+  padding: 13px 18px;
+  font-weight: bold;
+  transition: .15s;
+}
+
+button:active {
+  transform: scale(.97);
+}
+
+.orange {
+  background: #e98b29;
+  color: #111;
+}
+
+.dark {
+  background: #303030;
+  color: white;
+}
+
+.red {
+  background: #a92d2d;
+  color: white;
+}
+
+.green {
+  background: #236b42;
+  color: white;
+}
+
+button:disabled {
+  opacity: .35;
+  cursor: not-allowed;
+}
+
+/* 戻るボタン */
+
+.back-button {
+  display: block;
+  width: 180px;
+  margin: 25px auto 15px;
+  background: #303030;
+  color: white;
+  border: 1px solid #555;
+}
+
+/* 最初の画面 */
+
+.role-buttons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+  margin-top: 40px;
+}
+
+.role-buttons button {
+  min-height: 130px;
+  font-size: 20px;
+  background: #181818;
+  color: white;
+  border: 1px solid #444;
+}
+
+.role-buttons button:hover {
+  border-color: #f39a36;
+  color: #f39a36;
+}
+
+/* ルーム */
+
+.room-row {
+  display: flex;
+  gap: 10px;
+}
+
+.room-row input {
+  flex: 1;
+  min-width: 0;
+}
+
+/* 操作画面 */
+
+.control-buttons {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.control-buttons button {
+  min-height: 60px;
+  font-size: 16px;
+}
+
+.mode-list {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+.mode-button {
+  background: #292929;
+  color: white;
+  border: 1px solid #444;
+  min-height: 60px;
+}
+
+.mode-button.selected {
+  border: 2px solid #f39a36;
+  color: #f39a36;
+}
+
+.mode-form {
+  display: grid;
+  grid-template-columns: 1fr 130px auto;
+  gap: 9px;
+}
+
+.mode-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #222;
+  padding: 12px;
+  border-radius: 7px;
+  margin-top: 9px;
+  gap: 10px;
+}
+
+.mode-item button {
+  padding: 8px 12px;
+}
+
+.status {
+  color: #999;
+  font-size: 13px;
+  margin-top: 15px;
+}
+
+/* 操作画面タイマー表示 */
+
+.operator-timer {
+  text-align: center;
+  font-size: clamp(65px, 12vw, 105px);
+  font-weight: bold;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+  margin: 15px 0 25px;
+  color: white;
+}
+
+/* 表示画面 */
+
+#displayScreen {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+  text-align: center;
+  border: 9px solid transparent;
+  transition: border-color .3s;
+}
+
+/* 終了時の黄色い点滅枠 */
+
+#displayScreen.finished {
+  animation: finishedBorderBlink .4s steps(1, end) infinite;
+}
+
+@keyframes finishedBorderBlink {
+  0%, 49.9% {
+    border-color: #ffdf00;
+  }
+
+  50%, 100% {
+    border-color: transparent;
+  }
+}
+
+.display-label {
+  position: absolute;
+  top: 25px;
+  left: 0;
+  right: 0;
+  color: #666;
+  font-size: 12px;
+  letter-spacing: 4px;
+}
+
+.timer-wrapper {
+  position: relative;
+  width: min(75vw, 580px);
+  aspect-ratio: 1;
+}
+
+.timer-svg {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+.timer-background {
+  fill: none;
+  stroke: #242424;
+  stroke-width: 13;
+}
+
+.timer-progress {
+  fill: none;
+  stroke: #f39430;
+  stroke-width: 13;
+  stroke-linecap: round;
+  transition: stroke-dashoffset .15s linear, stroke .3s;
+}
+
+.finished .timer-progress {
+  stroke: #e32626;
+}
+
+.timer-center {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.display-mode {
+  font-size: clamp(25px, 4vw, 32px);
+  color: #ddd;
+  margin-bottom: 15px;
+  max-width: 80%;
+  overflow-wrap: anywhere;
+}
+
+.display-time {
+  font-size: clamp(65px, 14vw, 125px);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  color: white;
+}
+
+.display-time.finished-text {
+  color: #ed3030;
+  font-size: clamp(25px, 4vw, 32px);
+}
+
+.display-unit {
+  color: #888;
+  margin-top: 12px;
+  font-size: 13px;
+  letter-spacing: 3px;
+}
+
+.display-state {
+  color: #777;
+  font-size: 13px;
+  margin-top: 35px;
+  letter-spacing: 2px;
+}
+
+.display-room {
+  position: absolute;
+  bottom: 22px;
+  color: #555;
+  font-size: 11px;
+}
+
+@media(max-width: 550px) {
+  .mode-form {
+    grid-template-columns: 1fr 100px;
+  }
+
+  .mode-form button {
+    grid-column: span 2;
+  }
+
+  .role-buttons button {
+    font-size: 16px;
+  }
+
+  .control-buttons button {
+    padding: 10px 5px;
+    font-size: 13px;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<header id="mainHeader">
+  <h1>生徒会選挙用</h1>
+  <h1>リアルタイム演説タイマーシステム</h1>
+  <h1>(ver26.11.9.11.35)</h1>
+  <p>2026 made by DOJYO</p>
+</header>
+
+<!-- 役割選択 -->
+
+<div id="roleScreen" class="container">
+
+  <div class="section">
+    <h2>DEVICE SELECT</h2>
+
+    操作する端末の役割を選択してください。
+
+    <div class="role-buttons">
+      <button onclick="selectRole('operator')">
+        操作側
+      </button>
+
+      <button onclick="selectRole('display')">
+        表示側
+      </button>
+    </div>
+  </div>
+
+</div>
+
+<!-- ルーム接続 -->
+
+<div id="roomScreen" class="container hidden">
+
+  <div class="section">
+    <h2>ROOM CONNECTION</h2>
+
+    <p style="color:#aaa;font-size:13px">
+      操作側と表示側で同じルームIDを入力してください。
+    </p>
+
+    <div class="room-row">
+      <input id="roomInput"
+        placeholder="例：TIMER001"
+        maxlength="40">
+
+      <button class="orange" onclick="connectRoom()">
+        接続
+      </button>
+    </div>
+
+    <p id="connectionMessage" class="status"></p>
+  </div>
+
+  <button class="back-button" onclick="goBack()">
+    戻る
+  </button>
+
+</div>
+
+<!-- 操作画面 -->
+
+<div id="operatorScreen" class="container hidden">
+
+  <div class="section">
+    <h2>TIMER CONTROL</h2>
+
+    <div id="operatorTimer" class="operator-timer">
+      00:00
+    </div>
+
+    <div class="control-buttons">
+
+      <button class="green" onclick="startTimer()">
+        START
+      </button>
+
+      <button class="dark" onclick="stopTimer()">
+        STOP
+      </button>
+
+      <button class="red" onclick="resetTimer()">
+        RESET
+      </button>
+
+    </div>
+
+    <p id="operatorStatus" class="status">
+      接続待機中
+    </p>
+  </div>
+
+  <div class="section">
+    <h2>SELECT MODE</h2>
+
+    <div id="modeButtons" class="mode-list"></div>
+
+    <p style="font-size:12px;color:#888">
+      モードを選択すると、表示側のタイマーが自動的にセットされます。
+    </p>
+  </div>
+
+  <div class="section">
+    <h2>MODE SETTINGS</h2>
+
+    <div class="mode-form">
+
+      <input id="modeName"
+        placeholder="モード名">
+
+      <input id="modeSeconds"
+        type="number"
+        min="1"
+        max="86400"
+        placeholder="秒数">
+
+      <button class="orange" onclick="addMode()">
+        追加
+      </button>
+
+    </div>
+
+    <div id="modeManagement"></div>
+
+  </div>
+
+  <button class="back-button" onclick="goBack()">
+    戻る
+  </button>
+
+</div>
+
+<!-- 表示画面 -->
+
+<div id="displayScreen" class="hidden">
+
+  <div class="display-label">
+    生徒会選挙　演説タイマーシステム
+  </div>
+
+  <div class="timer-wrapper">
+
+    <svg class="timer-svg" viewBox="0 0 300 300">
+
+      <circle
+        class="timer-background"
+        cx="150"
+        cy="150"
+        r="135"
+      />
+
+      <circle
+        id="progressCircle"
+        class="timer-progress"
+        cx="150"
+        cy="150"
+        r="135"
+      />
+
+    </svg>
+
+    <div class="timer-center">
+
+      <div id="displayMode" class="display-mode">
+        READY
+      </div>
+
+      <div id="displayTime" class="display-time">
+        00:00
+      </div>
+
+      <div class="display-unit">
+        REMAINING TIME
+      </div>
+
+    </div>
+
+  </div>
+
+  <div id="displayState" class="display-state">
+    WAITING
+  </div>
+
+  <div id="displayRoom" class="display-room"></div>
+
+  <button class="back-button" onclick="goBack()">
+    戻る
+  </button>
+
+</div>
+
+<script type="module">
+
+import { initializeApp }
+from "https://www.gstatic.com/firebasejs/12.18.0/firebase-app.js";
+
+import {
+  getDatabase,
+  ref,
+  onValue,
+  set,
+  update,
+  get
+} from "https://www.gstatic.com/firebasejs/12.18.0/firebase-database.js";
+
+
+/* ==================================
+   FIREBASE CONFIG
+================================== */
+
+const firebaseConfig = {
+
+  apiKey: "YOUR_API_KEY",
+
+  authDomain: "YOUR_AUTH_DOMAIN",
+
+  databaseURL:
+    "https://darts-01-default-rtdb.asia-southeast1.firebasedatabase.app",
+
+  projectId: "darts-01",
+
+  appId:
+    "1:936099490830:web:bc3b39184138acbd1aa05f"
+
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+
+/* ==================================
+   VARIABLES
+================================== */
+
+let currentRole = "";
+let roomID = "";
+let roomRef = null;
+
+let roomData = null;
+let unsubscribe = null;
+
+let tickInterval = null;
+
+const circumference = 2 * Math.PI * 135;
+
+
+/* ==================================
+   INITIALIZE
+================================== */
+
+const circle =
+document.getElementById("progressCircle");
+
+circle.style.strokeDasharray = circumference;
+circle.style.strokeDashoffset = 0;
+
+
+/* ==================================
+   ROLE SELECT
+================================== */
+
+window.selectRole = function(role) {
+
+  currentRole = role;
+
+  document.getElementById("roleScreen")
+    .classList.add("hidden");
+
+  document.getElementById("roomScreen")
+    .classList.remove("hidden");
+
+};
+
+
+/* ==================================
+   BACK BUTTON
+================================== */
+
+window.goBack = function() {
+
+  // 操作画面または表示画面から戻る場合
+  if (
+    !document.getElementById("operatorScreen")
+      .classList.contains("hidden") ||
+    !document.getElementById("displayScreen")
+      .classList.contains("hidden")
+  ) {
+
+    // Firebaseのリアルタイム監視を停止
+    if (unsubscribe) {
+      unsubscribe();
+      unsubscribe = null;
+    }
+
+    // ローカルタイマーを停止
+    if (tickInterval) {
+      clearInterval(tickInterval);
+      tickInterval = null;
+    }
+
+    // 操作画面・表示画面を非表示
+    document.getElementById("operatorScreen")
+      .classList.add("hidden");
+
+    document.getElementById("displayScreen")
+      .classList.add("hidden");
+
+    // ルーム接続画面に戻る
+    document.getElementById("roomScreen")
+      .classList.remove("hidden");
+
+    // 表示画面から戻った場合、ヘッダーを再表示
+    document.getElementById("mainHeader")
+      .classList.remove("hidden");
+
+    return;
+  }
+
+  // ルーム接続画面から戻る場合
+  if (
+    !document.getElementById("roomScreen")
+      .classList.contains("hidden")
+  ) {
+
+    document.getElementById("roomScreen")
+      .classList.add("hidden");
+
+    document.getElementById("roleScreen")
+      .classList.remove("hidden");
+
+    return;
+  }
+
+};
+
+
+/* ==================================
+   ROOM CONNECTION
+================================== */
+
+window.connectRoom = async function() {
+
+  const id = document.getElementById("roomInput")
+    .value.trim();
+
+  if (!id) {
+    alert("ルームIDを入力してください。");
+    return;
+  }
+
+  roomID = id;
+
+  roomRef = ref(db, "remoteTimerRooms/" + roomID);
+
+  const message =
+  document.getElementById("connectionMessage");
+
+  message.textContent = "接続中...";
+
+  try {
+
+    const initial = {
+      duration: 0,
+      remaining: 0,
+      endAt: null,
+      modeName: "READY",
+      selectedMode: null,
+      status: "idle",
+      modes: {}
+    };
+
+    const snapshot = await get(roomRef);
+
+    if (!snapshot.exists()) {
+      await set(roomRef, initial);
+    }
+
+    if (currentRole === "operator") {
+
+      document.getElementById("roomScreen")
+        .classList.add("hidden");
+
+      document.getElementById("operatorScreen")
+        .classList.remove("hidden");
+
+    } else {
+
+      document.getElementById("mainHeader")
+        .classList.add("hidden");
+
+      document.getElementById("roomScreen")
+        .classList.add("hidden");
+
+      document.getElementById("displayScreen")
+        .classList.remove("hidden");
+
+      document.getElementById("displayRoom")
+        .textContent = "ROOM : " + roomID;
+
+    }
+
+    // リアルタイム監視
+
+    unsubscribe = onValue(roomRef, snapshot => {
+
+      roomData = snapshot.val();
+
+      if (!roomData) return;
+
+      if (currentRole === "operator") {
+        renderModes();
+        updateOperatorStatus();
+      }
+
+      if (currentRole === "display") {
+        renderDisplay();
+      }
+
+    });
+
+    startLocalClock();
+
+    message.textContent = "接続しました。";
+
+  } catch(error) {
+
+    console.error(error);
+
+    message.textContent =
+      "接続に失敗しました。Firebase設定を確認してください。";
+
+  }
+
+};
+
+
+/* ==================================
+   TIMER CALCULATION
+================================== */
+
+function getRemaining() {
+
+  if (!roomData) return 0;
+
+  if (roomData.status === "running") {
+
+    return Math.max(
+      0,
+      (Number(roomData.endAt || 0) - Date.now()) / 1000
+    );
+
+  }
+
+  return Math.max(
+    0,
+    Number(roomData.remaining || 0)
+  );
+
+}
+
+
+function startLocalClock() {
+
+  if (tickInterval) {
+    clearInterval(tickInterval);
+  }
+
+  tickInterval = setInterval(() => {
+
+    if (currentRole === "display" && roomData) {
+      renderDisplay();
+    }
+
+    if (currentRole === "operator" && roomData) {
+      updateOperatorStatus();
+    }
+
+  }, 100);
+
+}
+
+
+/* ==================================
+   TIMER DISPLAY
+================================== */
+
+function formatTime(seconds) {
+
+  const total = Math.ceil(seconds);
+
+  const minutes = Math.floor(total / 60);
+  const sec = total % 60;
+
+  return (
+    String(minutes).padStart(2, "0") +
+    ":" +
+    String(sec).padStart(2, "0")
+  );
+
+}
+
+
+function renderDisplay() {
+
+  if (!roomData) return;
+
+  const remaining = getRemaining();
+
+  const duration = Number(roomData.duration || 0);
+
+  const finished =
+    roomData.status === "finished" ||
+    (
+      roomData.status === "running" &&
+      remaining <= 0
+    );
+
+  const fraction = duration > 0
+    ? Math.min(1, Math.max(0, remaining / duration))
+    : 0;
+
+  const offset =
+    circumference * (1 - fraction);
+
+  circle.style.strokeDashoffset = offset;
+
+  document.getElementById("displayMode")
+    .textContent = roomData.modeName || "READY";
+
+  const timeElement =
+    document.getElementById("displayTime");
+
+  timeElement.textContent =
+    formatTime(remaining);
+
+  timeElement.classList.toggle(
+    "finished-text",
+    finished
+  );
+
+  document.getElementById("displayScreen")
+    .classList.toggle("finished", finished);
+
+  const stateElement =
+    document.getElementById("displayState");
+
+  if (finished) {
+
+    stateElement.textContent = "TIME UP";
+
+  } else if (roomData.status === "running") {
+
+    stateElement.textContent = "RUNNING";
+
+  } else if (roomData.status === "paused") {
+
+    stateElement.textContent = "STOPPED";
+
+  } else {
+
+    stateElement.textContent = "READY";
+
+  }
+
+}
+
+
+/* ==================================
+   OPERATOR STATUS
+================================== */
+
+function updateOperatorStatus() {
+
+  if (!roomData) return;
+
+  const remaining = getRemaining();
+
+  const timeText = formatTime(remaining);
+
+  document.getElementById("operatorTimer")
+    .textContent = timeText;
+
+  let text = "";
+
+  if (roomData.status === "running") {
+
+    text = "RUNNING : " + timeText;
+
+  } else if (roomData.status === "paused") {
+
+    text = "STOPPED : " + timeText;
+
+  } else if (roomData.status === "finished") {
+
+    text = "TIME UP";
+
+  } else {
+
+    text = "READY";
+
+  }
+
+  document.getElementById("operatorStatus")
+    .textContent = text;
+
+}
+
+
+/* ==================================
+   TIMER START
+================================== */
+
+window.startTimer = async function() {
+
+  if (!roomData) return;
+
+  const remaining = getRemaining();
+
+  if (remaining <= 0) return;
+
+  await set(roomRef, {
+
+    ...roomData,
+
+    remaining: remaining,
+
+    endAt: Date.now() + remaining * 1000,
+
+    status: "running"
+
+  });
+
+};
+
+
+/* ==================================
+   TIMER STOP
+================================== */
+
+window.stopTimer = async function() {
+
+  if (!roomData) return;
+
+  if (roomData.status !== "running") return;
+
+  const remaining = getRemaining();
+
+  await set(roomRef, {
+
+    ...roomData,
+
+    remaining: remaining,
+
+    endAt: null,
+
+    status: "paused"
+
+  });
+
+};
+
+
+/* ==================================
+   TIMER RESET
+================================== */
+
+window.resetTimer = async function() {
+
+  if (!roomData) return;
+
+  const duration = Number(roomData.duration || 0);
+
+  await set(roomRef, {
+
+    ...roomData,
+
+    remaining: duration,
+
+    endAt: null,
+
+    status: "idle"
+
+  });
+
+};
+
+
+/* ==================================
+   MODE ADD
+================================== */
+
+window.addMode = async function() {
+
+  const name = document.getElementById("modeName")
+    .value.trim();
+
+  const seconds = Number(
+    document.getElementById("modeSeconds").value
+  );
+
+  if (!name) {
+    alert("モード名を設定してください！");
+    return;
+  }
+
+  if (
+    !Number.isInteger(seconds) ||
+    seconds < 1 ||
+    seconds > 86400
+  ) {
+    alert("秒数を入力してください！");
+    return;
+  }
+
+  if (!roomData) return;
+
+  const modes = roomData.modes || {};
+
+  const id = "mode_" + crypto.randomUUID();
+
+  await set(roomRef, {
+
+    ...roomData,
+
+    modes: {
+      ...modes,
+
+      [id]: {
+        name: name,
+        seconds: seconds
+      }
+
+    }
+
+  });
+
+  document.getElementById("modeName").value = "";
+  document.getElementById("modeSeconds").value = "";
+
+};
+
+
+/* ==================================
+   MODE DELETE
+   改良版：対象モードのみを部分削除
+================================== */
+
+window.deleteMode = async function(id) {
+
+  if (!roomRef) {
+    alert("Firebaseに接続されていません。");
+    return;
+  }
+
+  if (!roomData || !roomData.modes || !roomData.modes[id]) {
+    alert("削除対象のモードが見つかりません。");
+    return;
+  }
+
+  if (!confirm("このモードを削除しますか？")) {
+    return;
+  }
+
+  try {
+
+    const updates = {};
+
+    updates["modes/" + id] = null;
+
+    if (roomData.selectedMode === id) {
+      updates["selectedMode"] = null;
+    }
+
+    await update(roomRef, updates);
+
+  } catch(error) {
+
+    console.error("モード削除エラー:", error);
+
+    alert(
+      "モードを削除できませんでした。\n通信状態やFirebaseの設定を確認してください。"
+    );
+
+  }
+
+};
+
+
+/* ==================================
+   MODE SELECT
+================================== */
+
+window.selectMode = async function(id) {
+
+  if (!roomData) return;
+
+  const mode = roomData.modes?.[id];
+
+  if (!mode) return;
+
+  await set(roomRef, {
+
+    ...roomData,
+
+    modeName: mode.name,
+
+    duration: mode.seconds,
+
+    remaining: mode.seconds,
+
+    endAt: null,
+
+    selectedMode: id,
+
+    status: "idle"
+
+  });
+
+};
+
+
+/* ==================================
+   MODE RENDER
+================================== */
+
+function renderModes() {
+
+  if (!roomData) return;
+
+  const modes = roomData.modes || {};
+
+  const buttons =
+    document.getElementById("modeButtons");
+
+  const management =
+    document.getElementById("modeManagement");
+
+  buttons.innerHTML = "";
+  management.innerHTML = "";
+
+  Object.entries(modes).forEach(([id, mode]) => {
+
+    const button = document.createElement("button");
+
+    button.className = "mode-button";
+
+    if (roomData.selectedMode === id) {
+      button.classList.add("selected");
+    }
+
+    button.textContent =
+      mode.name + " / " + mode.seconds + "秒";
+
+    button.onclick = () => selectMode(id);
+
+    buttons.appendChild(button);
+
+
+    const item = document.createElement("div");
+
+    item.className = "mode-item";
+
+    const label = document.createElement("span");
+
+    label.textContent =
+      mode.name + " (" + mode.seconds + "秒)";
+
+    const del = document.createElement("button");
+
+    del.className = "red";
+    del.textContent = "削除";
+
+    del.onclick = () => deleteMode(id);
+
+    item.append(label, del);
+
+    management.appendChild(item);
+
+  });
+
+}
+
+</script>
+
+</body>
+</html>
